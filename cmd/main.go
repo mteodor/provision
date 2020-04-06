@@ -30,6 +30,7 @@ const (
 	defHTTPPort        = "8091"
 	defMfUser          = "test@example.com"
 	defMfPass          = "test"
+	defMfApiKey        = ""
 	defThingIDs        = "aa942ec2-6f4e-45ab-a0cc-87cc3c64a55c"
 	defMfBSURL         = "https://k8s-aws.mainflux.com/bs/things/configs"
 	defMfWhiteListURL  = "https://k8s-aws.mainflux.com/bs/things/state"
@@ -50,6 +51,7 @@ const (
 	envHTTPPort         = "MF_PROVISION_HTTP_PORT"
 	envMfUser           = "MF_USER"
 	envMfPass           = "MF_PASS"
+	envMfApiKey         = "MF_API_KEY"
 	envThingIDs         = "MF_THING_IDS"
 	envMfBSURL          = "MF_BS_SVC_URL"
 	envMfBSWhiteListURL = "MF_BS_SVC_WHITELISTE_URL"
@@ -143,6 +145,7 @@ func loadConfig() config {
 		Config: provision.Config{
 			MFEmail:          mainflux.Env(envMfUser, defMfUser),
 			MFPass:           mainflux.Env(envMfPass, defMfPass),
+			MFApiKey:         mainflux.Env(envMfApiKey, defMfApiKey),
 			PredefinedThings: strings.Split(mainflux.Env(envThingIDs, defThingIDs), ","),
 			X509Provision:    provisionX509,
 			BSProvision:      provisionBS,

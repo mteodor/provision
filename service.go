@@ -26,6 +26,7 @@ type provisionService struct {
 	sdk              provsdk.SDK
 	mfEmail          string
 	mfPass           string
+	mfApiKey         string
 	x509Provision    bool
 	bsProvision      bool
 	autoWhiteList    bool
@@ -49,6 +50,7 @@ type Config struct {
 	SDK              provsdk.SDK
 	MFEmail          string
 	MFPass           string
+	MFApiKey         string
 	X509Provision    bool
 	BSProvision      bool
 	AutoWhiteList    bool
@@ -63,6 +65,7 @@ func New(cfg Config, logger logger.Logger) Service {
 		sdk:              cfg.SDK,
 		mfEmail:          cfg.MFEmail,
 		mfPass:           cfg.MFPass,
+		mfApiKey:         cfg.MFApiKey,
 		bsContent:        cfg.BSContent,
 		x509Provision:    cfg.X509Provision,
 		bsProvision:      cfg.BSProvision,
@@ -77,9 +80,12 @@ func (ps *provisionService) Provision(externalID, externalKey string) (res Resul
 	defer ps.recover(&err, &newThingID, &ctrlChanID, &dataChanID, &token)
 	channels := make([]string, 0)
 
-	token, err = ps.sdk.CreateToken(ps.mfEmail, ps.mfPass)
-	if err != nil {
-		return res, err
+	token = ps.mfApiKey
+	if ps.mfApiKey == "" {
+		token, err = ps.sdk.CreateToken(ps.mfEmail, ps.mfPass)
+		if err != nil {
+			return res, err
+		}
 	}
 
 	newThingID, err = ps.sdk.CreateThing(externalID, "", token)
