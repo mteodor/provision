@@ -5,6 +5,7 @@ import (
 
 	"github.com/mainflux/mainflux/logger"
 	provsdk "github.com/mainflux/provision/sdk"
+	"github.com/pkg/errors"
 )
 
 var _ Service = (*provisionService)(nil)
@@ -79,6 +80,7 @@ func (ps *provisionService) Provision(externalID, externalKey string) (res Resul
 	var newThingID, ctrlChanID, dataChanID, token string
 	defer ps.recover(&err, &newThingID, &ctrlChanID, &dataChanID, &token)
 	channels := make([]string, 0)
+	things := make([]string, 0)
 
 	token = ps.mfApiKey
 	if ps.mfApiKey == "" {
@@ -96,10 +98,12 @@ func (ps *provisionService) Provision(externalID, externalKey string) (res Resul
 	// Get newly created thing (in order to get the key).
 	thingCreated, err := ps.sdk.Thing(newThingID, token)
 	if err != nil {
-		return res, provsdk.ErrGetThing
+		return res, errors.Wrap(provsdk.ErrGetThing, fmt.Sprintf("thing id:%s", thingCreated.ID))
 	}
+	things = append(things, thingCreated.ID)
 
 	ctrlChannel, err := ps.sdk.CreateChannel("ctrlchan", "control", token)
+
 	if err != nil {
 		return res, provsdk.ErrCreateCtrl
 	}
@@ -112,12 +116,15 @@ func (ps *provisionService) Provision(externalID, externalKey string) (res Resul
 	dataChanID = dataChannel.ID
 
 	channels = append(channels, ctrlChanID, dataChanID)
+	things = append(things, ps.predefinedThings...)
 
-	for _, t := range ps.predefinedThings {
-		// Connect predefined Things to control channel.
-		err = ps.sdk.Connect(t, ctrlChanID, token)
-		if err != nil {
-			return res, provsdk.ErrConn
+	for _, c := range channels {
+		for _, t := range things {
+			// Connect predefined Things to control channel.
+			err = ps.sdk.Connect(t, c, token)
+			if err != nil {
+				return res, errors.Wrap(provsdk.ErrConn, fmt.Sprintf("ch:%s,th:%s", c, t))
+			}
 		}
 	}
 
