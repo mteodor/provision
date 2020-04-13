@@ -83,7 +83,7 @@ func (ps *provisionService) Provision(externalID, externalKey string) (res Resul
 	things := make([]string, 0)
 
 	token = ps.mfApiKey
-	if ps.mfApiKey == "" {
+	if token == "" {
 		token, err = ps.sdk.CreateToken(ps.mfEmail, ps.mfPass)
 		if err != nil {
 			return res, err
