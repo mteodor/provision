@@ -98,7 +98,7 @@ func (ps *provisionService) Provision(externalID, externalKey string) (res Resul
 	// Get newly created thing (in order to get the key).
 	thingCreated, err := ps.sdk.Thing(newThingID, token)
 	if err != nil {
-		return res, errors.Wrap(provsdk.ErrGetThing, fmt.Sprintf("thing id:%s", thingCreated.ID))
+		return res, errors.Wrap(provsdk.ErrGetThing, fmt.Sprintf("thing id: %s", thingCreated.ID))
 	}
 	things = append(things, thingCreated.ID)
 
@@ -123,7 +123,7 @@ func (ps *provisionService) Provision(externalID, externalKey string) (res Resul
 			// Connect predefined Things to control channel.
 			err = ps.sdk.Connect(t, c, token)
 			if err != nil {
-				return res, errors.Wrap(provsdk.ErrConn, fmt.Sprintf("ch:%s,th:%s", c, t))
+				return res, errors.Wrap(provsdk.ErrConn, fmt.Sprintf("ch: %s,th: %s", c, t))
 			}
 		}
 	}
