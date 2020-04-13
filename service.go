@@ -103,7 +103,6 @@ func (ps *provisionService) Provision(externalID, externalKey string) (res Resul
 	things = append(things, thingCreated.ID)
 
 	ctrlChannel, err := ps.sdk.CreateChannel("ctrlchan", "control", token)
-
 	if err != nil {
 		return res, provsdk.ErrCreateCtrl
 	}
