@@ -1,7 +1,7 @@
 package api
 
 import (
-	provsdk "github.com/mainflux/provision/sdk"
+	provSDK "github.com/mainflux/provision/sdk"
 )
 
 type addThingReq struct {
@@ -11,7 +11,7 @@ type addThingReq struct {
 
 func (req addThingReq) validate() error {
 	if req.ExternalID == "" || req.ExternalKey == "" {
-		return provsdk.ErrMalformedEntity
+		return provSDK.ErrMalformedEntity
 	}
 
 	return nil

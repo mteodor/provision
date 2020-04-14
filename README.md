@@ -12,6 +12,8 @@ default values.
 |---------------------------|---------------------------------------------------|------------------------------------------|
 | MF_USER                   | User (email) for accessing Mainflux               |  user@example.com                        |
 | MF_PASS                   | Mainflux password                                 |  user123                                 |
+| MF_API_KEY                | Mainflux authentication token                     |  ""                                      |
+| MF_PROVISION_CONFIG_FILE  | Provision config file                             |  "config.toml"                           |
 | MF_PROVISION_HTTP_PORT    | Provision service listening port                  |  8091                                    |
 | MF_ENV_CLIENTS_TLS        | Mainflux SDK TLS verification                     |  false                                   |
 | MF_PROVISION_CA_CERTS     | Mainflux gRPC secure certs                        |  ""                                      |
@@ -26,12 +28,46 @@ default values.
 | MF_USER                   | Mainflux user username                            | "test@example.com"                       |
 | MF_PASS                   | Mainflux user password                            | "password"                               |
 | MF_BS_SVC_URL             | Mainflux Bootstrap service URL                    | http://localhost/things/configs"         |
-| MF_BS_SVC_WHITELISTE_URL  | Mainflux Bootstrap service whitelist URL          | "http://localhost/things/state"          |
+| MF_BS_SVC_WHITELIST_URL   | Mainflux Bootstrap service whitelist URL          | "http://localhost/things/state"          |
 | MF_CERTS_SVC_URL          | Certificats service URL                           | "http://localhost/certs"                 |
 | MF_X509_PROVISIONING      | Should X509 client cert be provisioned            | "false"                                  |
 | MF_BS_CONFIG_PROVISIONING | Should thing config be saved in Bootstrap service | "true"                                   |
 | MF_BS_AUTO_WHITEIST       | Should thing be auto whitelisted                  | "true"                                   |
 | MF_BS_CONTENT             | Bootstrap service content                         | "{}"
+
+By default, call to mapping endpoint will create one thing and two channels ( 'control' and 'data' ) and connect it. If there is a requirement for different conf
+we can use [config](docker/configs/config.toml) file.
+In config.toml we can enlist array of things and channels that we want to create and make connections between them.
+Metadata can be whatever suits your needs except that at least one thing needs to have 'externalID' (which is populated with value from [request](#example)).
+For channels metadata 'type' is reserved for 'control' and 'data'.
+
+Example below
+```
+[[things]]
+  name = "thing"
+
+  [things.metadata]
+    externalID = "xxxxxx"
+
+
+[[channels]]
+  name = "control-channel"
+
+  [channels.metadata]
+    type = "control"
+
+[[channels]]
+  name = "data-channel"
+
+  [channels.metadata]
+    type = "data"
+
+[[channels]]
+  name = "export-channel"
+
+  [channels.metadata]
+    type = "data"
+```
 
 
 ## Example 

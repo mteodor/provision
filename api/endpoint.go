@@ -22,12 +22,12 @@ func doProvision(svc provision.Service) endpoint.Endpoint {
 		}
 
 		provisionResponse := provisionRes{
-			Thing:       res.Thing,
+			Things:      res.Things,
 			Channels:    res.Channels,
 			ClientCert:  res.ClientCert,
 			ClientKey:   res.ClientKey,
 			CACert:      res.CACert,
-			Whitelisted: res.Witelisted,
+			Whitelisted: res.Whitelisted,
 		}
 
 		return provisionResponse, nil
