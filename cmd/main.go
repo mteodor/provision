@@ -30,10 +30,11 @@ const (
 	defHTTPPort        = "8091"
 	defMfUser          = "test@example.com"
 	defMfPass          = "test"
-	defThingIDs        = "aa942ec2-6f4e-45ab-a0cc-87cc3c64a55c"
-	defMfBSURL         = "https://k8s-aws.mainflux.com/bs/things/configs"
-	defMfWhiteListURL  = "https://k8s-aws.mainflux.com/bs/things/state"
-	defMfCertsURL      = "https://k8s-aws.mainflux.com/certs"
+	defMfApiKey        = ""
+	defThingIDs        = ""
+	defMfBSURL         = "http://localhost:8202/things/configs"
+	defMfWhiteListURL  = "http://localhost:8202/things/state"
+	defMfCertsURL      = "http://localhost/certs"
 	defProvisionCerts  = "false"
 	defProvisionBS     = "true"
 	defBSAutoWhitelist = "true"
@@ -50,6 +51,7 @@ const (
 	envHTTPPort         = "MF_PROVISION_HTTP_PORT"
 	envMfUser           = "MF_USER"
 	envMfPass           = "MF_PASS"
+	envMfApiKey         = "MF_API_KEY"
 	envThingIDs         = "MF_THING_IDS"
 	envMfBSURL          = "MF_BS_SVC_URL"
 	envMfBSWhiteListURL = "MF_BS_SVC_WHITELISTE_URL"
@@ -130,6 +132,10 @@ func loadConfig() config {
 	if autoWhiteList && !provisionBS {
 		log.Fatalf("Can't auto whitelist if auto config save is off")
 	}
+	predefinedThings := make([]string, 0)
+	if thingIDs := mainflux.Env(envThingIDs, defThingIDs); len(thingIDs) > 0 {
+		predefinedThings = strings.Split(thingIDs, ",")
+	}
 
 	cfg := config{
 		logLevel:         mainflux.Env(envLogLevel, defLogLevel),
@@ -143,7 +149,8 @@ func loadConfig() config {
 		Config: provision.Config{
 			MFEmail:          mainflux.Env(envMfUser, defMfUser),
 			MFPass:           mainflux.Env(envMfPass, defMfPass),
-			PredefinedThings: strings.Split(mainflux.Env(envThingIDs, defThingIDs), ","),
+			MFApiKey:         mainflux.Env(envMfApiKey, defMfApiKey),
+			PredefinedThings: predefinedThings,
 			X509Provision:    provisionX509,
 			BSProvision:      provisionBS,
 			AutoWhiteList:    autoWhiteList,

@@ -9,7 +9,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/things"
+	"github.com/mainflux/mainflux/users"
 )
 
 const (
@@ -74,10 +75,7 @@ type ContentType string
 var _ SDK = (*mfSDK)(nil)
 
 // User represents mainflux user its credentials.
-type User struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
+type User users.User
 
 // Validate returns an error if user representation is invalid.
 func (u User) validate() error {
@@ -94,57 +92,27 @@ func (u User) validate() error {
 }
 
 // Thing represents mainflux thing.
-type Thing struct {
-	ID       string                 `json:"id,omitempty"`
-	Name     string                 `json:"name,omitempty"`
-	Key      string                 `json:"key,omitempty"`
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
-}
-
-// ThingsPage contains list of things in a page with proper metadata.
-type ThingsPage struct {
-	Things []Thing `json:"things"`
-	Total  uint64  `json:"total"`
-	Offset uint64  `json:"offset"`
-	Limit  uint64  `json:"limit"`
-}
+type Thing things.Thing
 
 // Channel represents mainflux channel.
-type Channel struct {
-	ID       string                 `json:"id,omitempty"`
-	Name     string                 `json:"name"`
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
-}
-
-// ChannelsPage contains list of channels in a page with proper metadata.
-type ChannelsPage struct {
-	Channels []Channel `json:"channels"`
-	Total    uint64    `json:"total"`
-	Offset   uint64    `json:"offset"`
-	Limit    uint64    `json:"limit"`
-}
-
-// MessagesPage contains list of messages in a page with proper metadata.
-type MessagesPage struct {
-	Total    uint64             `json:"total"`
-	Offset   uint64             `json:"offset"`
-	Limit    uint64             `json:"limit"`
-	Messages []mainflux.Message `json:"messages,omitempty"`
-}
-
-// ConnectionIDs contains ID lists of things and channels to be connected
-type ConnectionIDs struct {
-	ChannelIDs []string `json:"channel_ids"`
-	ThingIDs   []string `json:"thing_ids"`
-}
+type Channel things.Channel
 
 // SDK contains Mainflux API.
 type SDK interface {
 	// CreateUser registers mainflux user.
 	CreateUser(user User) error
 
+	// User returns user object.
+	User(token string) (User, error)
+
 	// CreateToken receives credentials and returns user token.
 	CreateToken(user User) (string, error)
+
+	// UpdateUser updates existing user.
+	UpdateUser(user User, token string) error
+
+	// UpdatePassword updates user password.
+	UpdatePassword(oldPass, newPass, token string) error
 
 	// CreateThing registers new thing and returns its id.
 	CreateThing(thing Thing, token string) (string, error)
@@ -167,9 +135,6 @@ type SDK interface {
 
 	// DeleteThing removes existing thing.
 	DeleteThing(id, token string) error
-
-	// ConnectThing connects thing to specified channel by id.
-	ConnectThing(thingID, chanID, token string) error
 
 	// Connect bulk connects things to channels specified by id.
 	Connect(conns ConnectionIDs, token string) error
@@ -274,4 +239,19 @@ func createURL(baseURL, prefix, endpoint string) string {
 	}
 
 	return fmt.Sprintf("%s/%s/%s", baseURL, prefix, endpoint)
+}
+
+func encodeError(statusCode int) error {
+	switch statusCode {
+	case http.StatusBadRequest:
+		return ErrInvalidArgs
+	case http.StatusForbidden:
+		return ErrUnauthorized
+	case http.StatusNotFound:
+		return ErrNotFound
+	case http.StatusConflict:
+		return ErrConflict
+	default:
+		return nil
+	}
 }

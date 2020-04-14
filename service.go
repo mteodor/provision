@@ -3,6 +3,7 @@ package provision
 import (
 	"fmt"
 
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/logger"
 	provsdk "github.com/mainflux/provision/sdk"
 )
@@ -26,6 +27,7 @@ type provisionService struct {
 	sdk              provsdk.SDK
 	mfEmail          string
 	mfPass           string
+	mfApiKey         string
 	x509Provision    bool
 	bsProvision      bool
 	autoWhiteList    bool
@@ -49,6 +51,7 @@ type Config struct {
 	SDK              provsdk.SDK
 	MFEmail          string
 	MFPass           string
+	MFApiKey         string
 	X509Provision    bool
 	BSProvision      bool
 	AutoWhiteList    bool
@@ -63,6 +66,7 @@ func New(cfg Config, logger logger.Logger) Service {
 		sdk:              cfg.SDK,
 		mfEmail:          cfg.MFEmail,
 		mfPass:           cfg.MFPass,
+		mfApiKey:         cfg.MFApiKey,
 		bsContent:        cfg.BSContent,
 		x509Provision:    cfg.X509Provision,
 		bsProvision:      cfg.BSProvision,
@@ -76,10 +80,14 @@ func (ps *provisionService) Provision(externalID, externalKey string) (res Resul
 	var newThingID, ctrlChanID, dataChanID, token string
 	defer ps.recover(&err, &newThingID, &ctrlChanID, &dataChanID, &token)
 	channels := make([]string, 0)
+	things := make([]string, 0)
 
-	token, err = ps.sdk.CreateToken(ps.mfEmail, ps.mfPass)
-	if err != nil {
-		return res, err
+	token = ps.mfApiKey
+	if token == "" {
+		token, err = ps.sdk.CreateToken(ps.mfEmail, ps.mfPass)
+		if err != nil {
+			return res, err
+		}
 	}
 
 	newThingID, err = ps.sdk.CreateThing(externalID, "", token)
@@ -90,8 +98,9 @@ func (ps *provisionService) Provision(externalID, externalKey string) (res Resul
 	// Get newly created thing (in order to get the key).
 	thingCreated, err := ps.sdk.Thing(newThingID, token)
 	if err != nil {
-		return res, provsdk.ErrGetThing
+		return res, errors.Wrap(provsdk.ErrGetThing, fmt.Errorf("thing id: %s", thingCreated.ID))
 	}
+	things = append(things, thingCreated.ID)
 
 	ctrlChannel, err := ps.sdk.CreateChannel("ctrlchan", "control", token)
 	if err != nil {
@@ -106,12 +115,15 @@ func (ps *provisionService) Provision(externalID, externalKey string) (res Resul
 	dataChanID = dataChannel.ID
 
 	channels = append(channels, ctrlChanID, dataChanID)
+	things = append(things, ps.predefinedThings...)
 
-	for _, t := range ps.predefinedThings {
-		// Connect predefined Things to control channel.
-		err = ps.sdk.Connect(t, ctrlChanID, token)
-		if err != nil {
-			return res, provsdk.ErrConn
+	for _, c := range channels {
+		for _, t := range things {
+			// Connect predefined Things to control channel.
+			err = ps.sdk.Connect(t, c, token)
+			if err != nil {
+				return res, errors.Wrap(provsdk.ErrConn, fmt.Errorf("ch: %s,th: %s", c, t))
+			}
 		}
 	}
 
