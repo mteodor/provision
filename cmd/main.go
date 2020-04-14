@@ -133,8 +133,8 @@ func loadConfig() config {
 		log.Fatalf("Can't auto whitelist if auto config save is off")
 	}
 	predefinedThings := make([]string, 0)
-	if len(mainflux.Env(envThingIDs, defThingIDs)) > 0 {
-		predefinedThings = strings.Split(mainflux.Env(envThingIDs, defThingIDs), ",")
+	if thingIDs := mainflux.Env(envThingIDs, defThingIDs); len(thingIDs) > 0 {
+		predefinedThings = strings.Split(thingIDs, ",")
 	}
 
 	cfg := config{
